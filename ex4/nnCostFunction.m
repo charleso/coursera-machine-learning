@@ -62,29 +62,50 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
-X = [ones(size(X, 1), 1), X];
-U = sigmoid(X * Theta1');
-h = sigmoid([ones(size(U, 1), 1), U] * Theta2');
+a1 = [ones(m, 1), X];
+z2 = a1 * Theta1';
+a2 = [ones(m, 1), sigmoid(z2)];
+h = a3 = sigmoid(a2 * Theta2');
 
-yy = zeros(m, num_labels);
+% Too many bugs caused by using 'y' before I renamed it like this
+y_labels = y;
+y = zeros(m, num_labels);
 for i = 1:m
-  yy(i, y(i)) = 1;
+  y(i, y_labels(i)) = 1;
 end
 
-for i = 1:m
-  for k = 1:num_labels
-    yx = yy(i, k);
-    hx = h(i, k);
-    J = J + (-yx * log(hx)) - ((1 - yx) * log(1 - hx));
-  end
-end
+% Part 1
+
+J = (-y .* log(h)) - ((1 - y) .* log(1 - h));
+
+% Part 3
 
 reg = (lambda / (2 * m)) * (...
   sum((Theta1(:, 2:end) .^ 2)(:)) + ...
   sum((Theta2(:, 2:end) .^ 2)(:)) ...
   );
 
-J = (J / m) + reg;
+J = (sum(J(:)) / m) + reg;
+
+% Part 2
+
+d1 = zeros(size(Theta1));
+d2 = zeros(size(Theta2));
+
+for i = 1:m
+  s3 = a3(i, :)' - y(i, :)';
+  s2 = Theta2' * s3 .* sigmoidGradient([1; z2(i, :)']);
+  d1 = d1 + s2(2:end) * a1(i, :);
+  d2 = d2 + s3 * a2(i, :);
+end
+
+Theta1_grad = (1 / m) * d1;
+Theta2_grad = (1 / m) * d2;
+
+% Part 3
+
+Theta1_grad = Theta1_grad + [zeros(size(Theta1, 1), 1), (lambda / m) * Theta1(:, 2:end)];
+Theta2_grad = Theta2_grad + [zeros(size(Theta2, 1), 1), (lambda / m) * Theta2(:, 2:end)];
 
 % -------------------------------------------------------------
 
